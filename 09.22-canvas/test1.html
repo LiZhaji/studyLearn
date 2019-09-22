@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      #cv {
+        /* x: 300px;
+        y: 300px; */
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="cv" width="200" height="200"></canvas>
+    <script>
+      const cv = document.querySelector("#cv").getContext("2d");
+      let x = 0;
+      let y = 0;
+      let speed = {
+        x: 5,
+        y: 0
+      };
+      let raf;
+      function createBall(params) {
+        // cv.fillStyle = 'red'
+        // cv.fillRect(0, 0, 100, 100)
+        cv.arc(0, 0, 10, -Math.PI / 2, Math.PI / 2, false);
+        cv.fill();
+      }
+      function move() {
+        raf = requestAnimationFrame(move);
+        if (x >= 100) {
+          speed.x = 0;
+          speed.y = 5;
+        }
+        if (y >= 100) {
+          speed.y = 0;
+          cancelAnimationFrame(raf);
+          createFace();
+          return
+        }
+        x += speed.x;
+        y += speed.y;
+        cv.clearRect(0, 0, 200, 200);
+        cv.beginPath();
+        cv.arc(x, y, 10, 0, 2 * Math.PI, false);
+        cv.fill();
+        cv.closePath();
+        // cv.fillStyle = 'red'
+        // cv.fillRect(x, 0, 10, 10)
+      }
+      createBall();
+
+      requestAnimationFrame(move);
+      function createFace(params) {
+        // cv.fillStyle = 'red'
+        // cv.fillRect(0, 0, 100, 100)
+        cv.beginPath();
+        cv.arc(70, 40, 5, 0, 2 * Math.PI, false);
+        // cv.fill();
+        cv.moveTo(45, 40)
+        cv.arc(40, 40, 5, 0, 2 * Math.PI, false);
+        cv.arc(75, 60, 20, 0, Math.PI, false);
+        cv.arc(55, 50, 0, 2 * Math.PI, false);
+        cv.closePath();
+        cv.stroke();
+      }
+    </script>
+  </body>
+</html>
