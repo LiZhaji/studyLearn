@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <audio src="./notes/1.C(do).mp3" id="note" controls autoplay></audio>
+    <audio src="./notes/1.C(do).mp3" id="note1"></audio>
+    <script>
+      const note = document.querySelector("#note");
+      const note1 = document.querySelector("#note1");
+      const urls = [
+        "1.C(do).mp3",
+        "2.D(re).mp3",
+        "3.E(mi).mp3",
+        "4.F(fa).mp3",
+        "5.G(sol).mp3",
+        "6.A(la).mp3",
+        "7.B(si).mp3"
+      ];
+      // note1.play()
+
+      document.addEventListener("keydown", () => {
+        const n = Math.floor(Math.random() * 7);
+        console.log(n);
+        // if (!note.getAttribute("src")) {
+        //   note.setAttribute("src", `./notes/${urls[n]}`);
+        // } else {
+        //   note1.setAttribute("src", `./notes/${urls[n]}`);
+        // }
+        // note.play();
+        note1.pause()
+          note1.setAttribute("src", `./notes/${urls[n]}`);
+          note1.play()
+
+      });
+      function play(params) {}
+    </script>
+  </body>
+</html>
