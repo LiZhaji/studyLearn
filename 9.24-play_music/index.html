@@ -5,39 +5,278 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      .all {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+      }
+      .row {
+        display: flex;
+        width: 100%;
+        height: 20%;
+      }
+      .pie {
+        width: 16.6%;
+        box-shadow: inset 0px 0px 10px 0px #949494;
+        transition: background-color 3s;
+      }
+      .left_box{
+        position: fixed;
+        width: 100px;
+        height: 100%;
+        right: -50px;
+        top: 0;
+        background: #a5a558;
+      }
+    </style>
   </head>
   <body>
-    <audio src="./notes/1.C(do).mp3" id="note" controls autoplay></audio>
-    <audio src="./notes/1.C(do).mp3" id="note1"></audio>
+    <!-- 点击屏幕任意位置：
+    1、出现音乐（同一位置出现的音相同）
+    2、出现图案，图案能随着手指滑动变化
+    3、多指？
+    4、背景可否渐变
+    -->
+    <div class="all">
+      <div class="row">
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+      </div>
+      <div class="row">
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+      </div>
+      <div class="row">
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+      </div>
+      <div class="row">
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+      </div>
+      <div class="row">
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+        <div class="pie"></div>
+      </div>
+    </div>
+    <audio id="noteAudio"></audio>
+    <canvas id="canvas" width="400" height="700"></canvas>
+    <div class="left_box">left</div>
+    <audio id="noteAudio2" ></audio>
     <script>
-      const note = document.querySelector("#note");
-      const note1 = document.querySelector("#note1");
-      const urls = [
-        "1.C(do).mp3",
-        "2.D(re).mp3",
-        "3.E(mi).mp3",
-        "4.F(fa).mp3",
-        "5.G(sol).mp3",
-        "6.A(la).mp3",
-        "7.B(si).mp3"
-      ];
-      // note1.play()
+      // 1、队列播放
+      // 2、多音轨同时播放 ?
+      // 3、固定的键固定的音
+      window.onload = () => {
+        // 为什么别的函数能取到？
+        printColor();
+        changeColor();
+        printShape();
+        // document.addEventListener("keydown", keydownPc);
+        document.addEventListener("touchstart", handleStart);
+        document.addEventListener("touchmove", handleMove);
+        document.addEventListener("touchend", handleEnd);
+      };
+      const musicObj = {
+        toPlayNotes: [],
+        hasNote: false // 当前队列是否有音符待播放
+      };
+      const shapes = [];
+      const noteAudio = document.querySelector("#noteAudio");
 
-      document.addEventListener("keydown", () => {
-        const n = Math.floor(Math.random() * 7);
-        console.log(n);
-        // if (!note.getAttribute("src")) {
-        //   note.setAttribute("src", `./notes/${urls[n]}`);
-        // } else {
-        //   note1.setAttribute("src", `./notes/${urls[n]}`);
-        // }
-        // note.play();
-        note1.pause()
-          note1.setAttribute("src", `./notes/${urls[n]}`);
-          note1.play()
-
-      });
-      function play(params) {}
+      function keydownPc(e) {
+        if (e.keyCode < 65 || e.keyCode > 90) {
+          return;
+        }
+        const n = (e.keyCode - 65) % 11;
+        // const n = Math.floor(Math.random() * 7);
+        console.log(e.keyCode, n);
+        musicObj.toPlayNotes.push(n);
+        if (!musicObj.hasNote) {
+          musicObj.hasNote = true;
+          play();
+        }
+      }
+      function play() {
+        return new Promise(r => {
+          console.log(musicObj.toPlayNotes);
+          const curN = musicObj.toPlayNotes.shift();
+          noteAudio.setAttribute("src", `./notes/${curN}.mp3`);
+          noteAudio.play();
+          setTimeout(() => {
+            r();
+            musicObj.toPlayNotes.length !== 0
+              ? play()
+              : (musicObj.hasNote = false);
+          }, 300);
+        });
+      }
+      function handleStart(e) {
+        // e.target.pageX
+        console.log('start', e.target);
+        
+        for (let i = 0; i < e.touches.length; i++) {
+          const el = e.touches[i];
+          const n = Math.floor(Math.random() * 4 + 2);
+          const shape = {
+            color: "",
+            init: false,
+            points: []
+          };
+          for (let i = 0; i < n; i++) {
+            shape.points.push({
+              x: el.pageX,
+              y: el.pageY,
+              speed: {x: (Math.random()-0.5)*60,y:(Math.random()-0.5)*60}
+            });
+          }
+          shapes.push(shape);
+          deepColor(el.target)
+        }
+        const n = 1+ Math.floor(Math.random() * 7);
+        musicObj.toPlayNotes.push(n);
+        if (!musicObj.hasNote) {
+          musicObj.hasNote = true;
+          play();
+        }
+      }
+      function handleMove(e) {
+        console.log("move", shapes);
+        for (let i = 0; i < e.touches.length; i++) {
+          const el = e.touches[i];
+          const point = shapes[shapes.length - 1]
+          const follow = Math.round(point.points.length / 2)
+          for (let i = 0; i < follow; i++) {
+              point.points[i].x = el.pageX
+              point.points[i].y = el.pageY
+          }
+        }
+      }
+      function handleEnd(e) {
+        console.log("end", e.target);
+        shallowColor(e.target)
+      }
+      function printColor() {
+        const pies = document.querySelectorAll(".pie");
+        Array.from(pies).forEach((pie, i) => {
+          // pie.style.backgroundColor = `rgb(${(i+1) * r}, ${(i+1) * g}, ${(i+1) * b}, 0.9)`;
+          let r = Math.floor(Math.random() * 200 + 20);
+          let g = Math.floor(Math.random() * 200 + 20);
+          let b = Math.floor(Math.random() * 200 + 20);
+          pie.style.backgroundColor = `rgb(${r}, ${g}, ${b}, 0.3)`;
+        });
+      }
+      function deepColor(e) {
+        const bg = e.style.backgroundColor;
+        e.style.backgroundColor = bg.replace("0.3", "0.4");
+      }
+      function shallowColor(e) {
+        const bg = e.style.backgroundColor;
+        e.style.backgroundColor = bg.replace("0.4", "0.3");
+      }
+      function changeColor() {
+        const pies = document.querySelectorAll(".pie");
+        const len = pies.length;
+        let lastTime = 0;
+        let r = Math.floor(Math.random() * 10);
+        let g = Math.floor(Math.random() * 10);
+        let b = Math.floor(Math.random() * 10);
+        function change(nowTime) {
+          requestAnimationFrame(change);
+          if (nowTime - lastTime <= 3000) {
+            return;
+          }
+          Array.from(pies).forEach((pie, i) => {
+            // pie.style.backgroundColor = `rgb(${(i+1) * r}, ${(i+1) * g}, ${(i+1) * b}, 0.9)`;
+            let r = Math.floor(Math.random() * 200 + 20);
+            let g = Math.floor(Math.random() * 200 + 20);
+            let b = Math.floor(Math.random() * 200 + 20);
+            pie.style.backgroundColor = `rgb(${r}, ${g}, ${b}, 0.3)`;
+          });
+          // r >= 255 || r <= 0 ? (r += 1) : (r -= 1);
+          // g >= 255 || g <= 0 ? (g += 1) : (g -= 1);
+          // b >= 255 || b <= 0 ? (b += 1) : (b -= 1);
+          lastTime = nowTime;
+        }
+        requestAnimationFrame(change);
+      }
+      function printShape() {
+        const canvas = document.querySelector("#canvas");
+        const ctx = canvas.getContext("2d");
+        let lastTime = 0;
+        function print(nowTime) {
+          requestAnimationFrame(print);
+          // console.log(shapes);
+          if (nowTime - lastTime >= 3000) {
+            for (let shape of shapes) {
+              for (let point of shape.points){
+                point.speed.x = -point.speed.x
+                point.speed.y = -point.speed.y
+                console.log()
+              }
+            }
+            lastTime = nowTime
+            // return;
+          }
+          ctx.clearRect(0, 0, 400, 700);
+          for (let i = 0; i < shapes.length; i++) {
+            const shape = shapes[i];
+            // const {firstX, firstY} = {shape.points[0].x, shape.points[0].y}
+            const firstX = shape.points[0].x;
+            const firstY = shape.points[0].y;
+            if (!shape.init) {
+              const r = Math.floor(Math.random() * 200 + 20);
+              const g = Math.floor(Math.random() * 200 + 20);
+              const b = Math.floor(Math.random() * 200 + 20);
+              shape.color = `rgb(${r}, ${g}, ${b})`;
+              shape.init = true;
+            }
+            ctx.beginPath();
+            ctx.moveTo(firstX, firstY);
+            ctx.fillStyle = shape.color;
+            shape.points.forEach(point => {
+              point.x <= 0 ? (point.x = 10) : "";
+              point.x >= 400 ? (point.x = 390) : "";
+              point.y <= 0 ? (point.y = 10) : "";
+              point.y >= 700 ? (point.y = 700) : "";
+              ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+              ctx.fill();
+              point.x += point.speed.x / 60
+              point.y += point.speed.y / 60
+            });
+            ctx.lineTo(firstX, firstY);
+            ctx.closePath();
+          }
+        }
+        requestAnimationFrame(print);
+      }
     </script>
   </body>
 </html>
