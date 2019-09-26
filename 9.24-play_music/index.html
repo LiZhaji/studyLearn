@@ -27,7 +27,7 @@
         box-shadow: inset 0px 0px 10px 0px #949494;
         transition: background-color 3s;
       }
-      .left_box{
+      .left_box {
         position: fixed;
         width: 100px;
         height: 100%;
@@ -87,30 +87,43 @@
       </div>
     </div>
     <audio id="noteAudio"></audio>
+    <audio id="noteAudio2"></audio>
     <canvas id="canvas" width="400" height="700"></canvas>
-    <div class="left_box">left</div>
-    <audio id="noteAudio2" ></audio>
+    <!-- <div class="left_box">left</div> -->
     <script>
       // 1、队列播放
-      // 2、多音轨同时播放 ?
+      // 2、多音轨同时播放
       // 3、固定的键固定的音
       window.onload = () => {
         // 为什么别的函数能取到？
+        pieNode()
         printColor();
         changeColor();
-        printShape();
+        // printShape();
         // document.addEventListener("keydown", keydownPc);
         document.addEventListener("touchstart", handleStart);
         document.addEventListener("touchmove", handleMove);
         document.addEventListener("touchend", handleEnd);
       };
+      let params = {
+        noteIntvl: 400
+      };
+
       const musicObj = {
         toPlayNotes: [],
-        hasNote: false // 当前队列是否有音符待播放
+        hasNote: false, // 当前队列是否有音符待播放
+        noteCount: 0
       };
       const shapes = [];
       const noteAudio = document.querySelector("#noteAudio");
+      const noteAudio2 = document.querySelector("#noteAudio2");
 
+      function pieNode(params) {
+        const pies = [...document.querySelectorAll(".pie")];
+        pies.forEach((pie, i) => {
+          pie.dataset.note = i % 6 + 1
+        })
+      }
       function keydownPc(e) {
         if (e.keyCode < 65 || e.keyCode > 90) {
           return;
@@ -128,60 +141,52 @@
         return new Promise(r => {
           console.log(musicObj.toPlayNotes);
           const curN = musicObj.toPlayNotes.shift();
-          noteAudio.setAttribute("src", `./notes/${curN}.mp3`);
-          noteAudio.play();
+          if (musicObj.noteCount % 2 === 0) {
+            noteAudio.setAttribute("src", `./notes/${curN}.mp3`);
+            noteAudio.play();
+          } else {
+            noteAudio2.setAttribute("src", `./notes/${curN}.mp3`);
+            noteAudio2.play();
+          }
+          musicObj.noteCount++;
           setTimeout(() => {
             r();
             musicObj.toPlayNotes.length !== 0
               ? play()
               : (musicObj.hasNote = false);
-          }, 300);
+          }, params.noteIntvl);
         });
       }
       function handleStart(e) {
         // e.target.pageX
-        console.log('start', e.target);
-        
+        console.log("start", e.target);
+
         for (let i = 0; i < e.touches.length; i++) {
           const el = e.touches[i];
-          const n = Math.floor(Math.random() * 4 + 2);
-          const shape = {
-            color: "",
-            init: false,
-            points: []
-          };
-          for (let i = 0; i < n; i++) {
-            shape.points.push({
-              x: el.pageX,
-              y: el.pageY,
-              speed: {x: (Math.random()-0.5)*60,y:(Math.random()-0.5)*60}
-            });
+          initShape(el);
+          deepColor(el.target);
+          const n = el.target.dataset.note
+          musicObj.toPlayNotes.push(n);
+          if (!musicObj.hasNote) {
+            musicObj.hasNote = true;
+            play();
           }
-          shapes.push(shape);
-          deepColor(el.target)
-        }
-        const n = 1+ Math.floor(Math.random() * 7);
-        musicObj.toPlayNotes.push(n);
-        if (!musicObj.hasNote) {
-          musicObj.hasNote = true;
-          play();
         }
       }
       function handleMove(e) {
         console.log("move", shapes);
         for (let i = 0; i < e.touches.length; i++) {
           const el = e.touches[i];
-          const point = shapes[shapes.length - 1]
-          const follow = Math.round(point.points.length / 2)
+          const point = shapes[shapes.length - 1];
+          const follow = Math.round(point.points.length / 2);
           for (let i = 0; i < follow; i++) {
-              point.points[i].x = el.pageX
-              point.points[i].y = el.pageY
+            point.points[i].x = el.pageX;
+            point.points[i].y = el.pageY;
           }
         }
       }
       function handleEnd(e) {
-        console.log("end", e.target);
-        shallowColor(e.target)
+        shallowColor(e.target);
       }
       function printColor() {
         const pies = document.querySelectorAll(".pie");
@@ -227,22 +232,39 @@
         }
         requestAnimationFrame(change);
       }
+      function initShape(el) {
+        const n = Math.floor(Math.random() * 4 + 2);
+        const shape = {
+          color: "",
+          init: false,
+          points: []
+        };
+        for (let i = 0; i < n; i++) {
+          shape.points.push({
+            x: el.pageX,
+            y: el.pageY,
+            speed: {
+              x: (Math.random() - 0.5) * 60,
+              y: (Math.random() - 0.5) * 60
+            }
+          });
+        }
+        shapes.push(shape);
+      }
       function printShape() {
         const canvas = document.querySelector("#canvas");
         const ctx = canvas.getContext("2d");
         let lastTime = 0;
         function print(nowTime) {
           requestAnimationFrame(print);
-          // console.log(shapes);
           if (nowTime - lastTime >= 3000) {
             for (let shape of shapes) {
-              for (let point of shape.points){
-                point.speed.x = -point.speed.x
-                point.speed.y = -point.speed.y
-                console.log()
+              for (let point of shape.points) {
+                point.speed.x = -point.speed.x;
+                point.speed.y = -point.speed.y;
               }
             }
-            lastTime = nowTime
+            lastTime = nowTime;
             // return;
           }
           ctx.clearRect(0, 0, 400, 700);
@@ -268,8 +290,8 @@
               point.y >= 700 ? (point.y = 700) : "";
               ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
               ctx.fill();
-              point.x += point.speed.x / 60
-              point.y += point.speed.y / 60
+              point.x += point.speed.x / 60;
+              point.y += point.speed.y / 60;
             });
             ctx.lineTo(firstX, firstY);
             ctx.closePath();

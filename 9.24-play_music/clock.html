@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script>
+      const ctx = document.querySelector("#canvas").getContext("2d");
+
+      // ctx.fillRect(0,0,100,100)
+
+      // ctx.fillStyle='blue'
+      // ctx.arc(50,50,40,0,2*Math.PI)
+      // ctx.clip()
+      // // draw background
+      //   var lingrad = ctx.createLinearGradient(0,-75,0,75);
+      //   lingrad.addColorStop(0, '#232256');
+      //   lingrad.addColorStop(1, '#143778');
+
+      //   ctx.fillStyle = lingrad;
+      //   ctx.fillRect(0,0,150,150);
+
+      const clockObj = {
+        radius: 50,
+        x: 60,
+        y: 60
+      };
+      ctx.translate(clockObj.x, clockObj.y);
+      ctx.rotate((Math.PI * 3) / 2);
+      function static() {
+        // 圆心
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 2, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        // 钟框
+        ctx.moveTo(clockObj.radius, 0);
+        ctx.arc(0, 0, clockObj.radius, 0, 2 * Math.PI);
+        ctx.stroke();
+        // 大刻表12个，小刻表48个
+        for (let i = 0; i < 60; i++) {
+          ctx.lineWidth = i % 15 === 0 ? 2 : 1;
+          i % 5 === 0 ? ctx.moveTo(40, 0) : ctx.moveTo(45, 0);
+          ctx.lineTo(clockObj.radius, 0);
+          ctx.rotate(Math.PI / 30); // 旋转的是x轴，不是线
+        }
+        ctx.stroke();
+        ctx.closePath();
+      }
+
+      let lastTime = 0;
+      function hands(t) {
+        requestAnimationFrame(hands);
+        if (t - lastTime < 1000) {
+          return;
+        }
+        lastTime = t;
+
+        console.log(1);
+        const now = new Date();
+        const second = now.getSeconds();
+        const minute = now.getMinutes();
+        const hour = now.getHours() > 12 ? now.getHours() - 12 : now.getHours();
+        ctx.clearRect(-60, -60, 120, 120);
+        ctx.save();
+        static();
+        ctx.restore();
+        // 秒针转动
+        ctx.save();
+        ctx.rotate((Math.PI / 30) * second);
+        ctx.beginPath();
+        //     ctx.moveTo(-10, 0)
+        //     ctx.lineTo(35, 0)
+        ctx.arc(20, 20, 5, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
+
+        // 分针
+        ctx.save();
+        ctx.rotate((Math.PI / 30) * (minute + second / 60));
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.moveTo(-7, 0);
+        ctx.lineTo(25, 0);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
+
+        // 时针
+        ctx.save();
+        ctx.rotate((Math.PI / 6) * (hour + minute / 60 + second / 3600));
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.moveTo(-4, 0);
+        ctx.lineTo(15, 0);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
+      }
+      requestAnimationFrame(hands);
+    </script>
+  </body>
+</html>
