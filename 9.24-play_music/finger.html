@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="300" height="600"></canvas>
+    <script>
+      const cv = document.querySelector("#canvas");
+
+      const ctx = cv.getContext("2d");
+      const lastPoint = {
+        x: 1000,
+        y: 1000
+      };
+      const curPoint = {
+        x: 1000,
+        y: 1000
+      };
+      cv.addEventListener("touchstart", start);
+      cv.addEventListener("touchmove", move);
+      cv.addEventListener("touchend", end);
+      cv.addEventListener("mousemove", move);
+      print();
+
+      function start(e) {
+        console.log(1);
+        if (lastPoint.x - e.clientX >= 5 || lastPoint.y - e.clientY >= 5) {
+          ctx.moveTo(e.clientX, e.clientY);
+        }
+      }
+      function move(e) {
+        //   console.log(2,lastPoint.x - e.clientX,lastPoint.y - e.clientY)
+        if (lastPoint.x - e.clientX >= 10 || lastPoint.y - e.clientY >= 10) {
+          //     ctx.moveTo(e.clientX,e.clientY)
+        }
+        lastPoint.x = e.clientX;
+        lastPoint.y = e.clientY;
+        curPoint.x = e.clientX;
+        curPoint.y = e.clientY;
+      }
+      function end(e) {
+        console.log(3);
+        lastPoint.x = e.clientX;
+        lastPoint.y = e.clientY;
+      }
+      function print() {
+        function line() {
+          requestAnimationFrame(line);
+          console.log(1212);
+          ctx.clearRect(0, 0, 300, 600);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+          //   ctx.arc(10, 10, 10, 0, 2 * Math.PI)
+          ctx.lineTo(curPoint.x, curPoint.y);
+          ctx.stroke();
+        }
+        requestAnimationFrame(line);
+      }
+    </script>
+  </body>
+</html>
