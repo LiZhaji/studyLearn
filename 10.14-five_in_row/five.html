@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>five in row</title>
+    <style>
+      .rela {
+        position: relative;
+      }
+    </style>
   </head>
   <body>
     <!-- <ul>
@@ -19,23 +24,134 @@
   </ol>
   <s>ssss</s>
   <del>dellll</del> -->
-    <canvas id="rows" width="500" height="500"></canvas>
+    <div class="rela">
+      <canvas id="rows" width="500" height="500"></canvas>
+    </div>
     <script>
-      pirntRows()
+      const cv = document.querySelector("#rows");
+      const ctx = cv.getContext("2d");
+      const rows = {
+        rowNum: 10,
+        sideL: 50,
+        pieceR: 15,
+        validR: 15 // 点击的有效范围
+      };
+      const piecesCount = []
+      let touristTime = true;
+
+      init()
+      pirntRows();
+      downByTourist();
+
+      function init() {
+        for (let i = 0; i < rows.rowNum; i++) {
+          const row = []
+          for (let j = 0; j < rows.rowNum; j++) {
+            row.push(0)
+          }
+          piecesCount.push(row)
+        }
+      }
 
       function pirntRows() {
-        const ctx = document.querySelector("#rows").getContext("2d");
-        ctx.strokeRect(0, 0, 500, 500);
-        for (let i = 0; i < 10; i++) {
-          for (let j = 0; j < 10; j++) {
-            ctx.strokeRect(i * 50, j * 50, 50, 50);
+        ctx.strokeRect(0, 0, rows.rowNum * rows.sideL, rows.rowNum * rows.sideL);
+        for (let i = 0; i <= rows.rowNum; i++) {
+          for (let j = 0; j <= rows.rowNum; j++) {
+            ctx.strokeRect(
+              i * rows.sideL,
+              j * rows.sideL,
+              rows.sideL,
+              rows.sideL
+            );
           }
         }
       }
 
-      function name(params) {
+      // 画棋子
+      function printPiece(x, y, color) {
+        console.log(x, y);
+        ctx.beginPath()
+        ctx.moveTo(x + rows.pieceR, y);
+        ctx.arc(x, y, rows.pieceR, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill()
+        ctx.closePath()
+      }
+
+      // 游客下黑棋
+      function downByTourist(params) {
+        cv.addEventListener("click", e => {
+          if (!touristTime) {
+            return;
+          }
+          const crossX = e.offsetX < rows.sideL / 2 || e.offsetX > rows.sideL * (rows.rowNum - 0.5);
+          const crossY = e.offsetY < rows.sideL / 2 || e.offsetY > rows.sideL * (rows.rowNum - 0.5);
+          if (crossX || crossY) {
+            console.log("越界了！");
+            return;
+          }
+          const x = Math.round(e.offsetX / 50);
+          const y = Math.round(e.offsetY / 50);
+          if(piecesCount[x][y]){
+            console.log("重复点击！");
+            return;
+          }
+          const focusX = x * 50;
+          const focusY = y * 50;
+          const distanceX = crossX ? Infinity : Math.abs(e.offsetX - focusX);
+          const distanceY = crossY ? Infinity : Math.abs(e.offsetY - focusY);
+          const pieceX = distanceX <= rows.validR ? focusX : -1;
+          const pieceY = distanceY <= rows.validR ? focusY : -1;
+          if (pieceX === -1 || pieceY === -1) {
+            console.log("无效点击！");
+            return
+          }
+          
+          printPiece(pieceX, pieceY, "black");
+          piecesCount[x][y] = 1
+          touristTime = false;
+
+          downByComputer()
+
+        });
+      }
+
+      // 电脑下白棋
+      function downByComputer() {
+        if (touristTime) {
+          return
+        }
+        // 随机下
+        let x = Math.ceil( Math.random() *  (rows.rowNum - 2))
+        let y = Math.ceil( Math.random() *  (rows.rowNum - 2))
+        while(piecesCount[x][y]){
+          x = Math.ceil( Math.random() *  (rows.rowNum - 2))
+          y = Math.ceil( Math.random() *  (rows.rowNum - 2))
+        }
+        printPiece(x * 50, y * 50, 'wheat')
+        piecesCount[x][y] = 2
+        touristTime = true;
+      }
+
+      // 成功
+      function success() {
         
       }
+      // 横
+      function horizontal() {
+        piecesCount.forEach(row => {
+          
+        })
+      }
+      // 竖
+      function vertical(params) {
+        
+      }
+      // 斜
+      function oblique(params) {
+        
+      }
+
     </script>
   </body>
 </html>
