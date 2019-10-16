@@ -36,14 +36,18 @@
         pieceR: 15,
         validR: 15 // 点击的有效范围
       };
-      const piecesCount = []
+      const dirs = ['lup', 'up', 'rup', 'l', 'r', 'lbt', 'bt', 'rbt']
+      const dirOprs = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
+      let piecesCount = []
+      let process = {}
+      let msg = ''
       let touristTime = true;
+      let over = false
 
       init()
-      pirntRows();
-      downByTourist();
 
       function init() {
+        piecesCount = []
         for (let i = 0; i < rows.rowNum; i++) {
           const row = []
           for (let j = 0; j < rows.rowNum; j++) {
@@ -51,6 +55,12 @@
           }
           piecesCount.push(row)
         }
+        process = {}
+        ctx.clearRect(0, 0, rows.rowNum * rows.sideL, rows.rowNum * rows.sideL)
+        pirntRows();
+        touristTime = true
+        over = false
+        downByTourist();
       }
 
       function pirntRows() {
@@ -69,7 +79,6 @@
 
       // 画棋子
       function printPiece(x, y, color) {
-        console.log(x, y);
         ctx.beginPath()
         ctx.moveTo(x + rows.pieceR, y);
         ctx.arc(x, y, rows.pieceR, 0, Math.PI * 2);
@@ -81,7 +90,7 @@
       // 游客下黑棋
       function downByTourist(params) {
         cv.addEventListener("click", e => {
-          if (!touristTime) {
+          if (!touristTime || over) {
             return;
           }
           const crossX = e.offsetX < rows.sideL / 2 || e.offsetX > rows.sideL * (rows.rowNum - 0.5);
@@ -93,6 +102,8 @@
           const x = Math.round(e.offsetX / 50);
           const y = Math.round(e.offsetY / 50);
           if(piecesCount[x][y]){
+            console.log(piecesCount);
+            
             console.log("重复点击！");
             return;
           }
@@ -109,16 +120,23 @@
           
           printPiece(pieceX, pieceY, "black");
           piecesCount[x][y] = 1
+          
+          if(success(x, y)){
+            alert(msg)
+            init()
+            return
+          } 
+          
           touristTime = false;
-
           downByComputer()
+
 
         });
       }
 
       // 电脑下白棋
       function downByComputer() {
-        if (touristTime) {
+        if (touristTime || over) {
           return
         }
         // 随机下
@@ -131,25 +149,75 @@
         printPiece(x * 50, y * 50, 'wheat')
         piecesCount[x][y] = 2
         touristTime = true;
+
+        success(x, y)
+
       }
 
       // 成功
-      function success() {
+      function success(i, j) {
+        const curPiece = piecesCount[i][j]
+        const key = '' + i + j
+        process[key] = process[key] || {}
+        const dirs = process[key]
+        const tempDir = ['lup', 'up', 'rup', 'l', 'r', 'lbt', 'bt', 'rbt']
+        for (let jj = j-1; jj <= j+1; jj++) {
+          for (let ii = i-1; ii <= i+1; ii++) {
+            // 该点本身不参与记录
+            if (jj === j && ii === i) {
+              continue
+            }
+            const curDir = tempDir.shift()
+            // 表示该方向越界了
+            if (jj < 0 || ii < 0) {
+              dirs[curDir] = -1 
+              continue
+            }
+
+            dirs[curDir] = getDirCount(ii, jj, curDir, curPiece)
+            
+          }
+        }
+        process[key] = dirs
+        console.log(key, process[key]);
+        if (over) {
+          return true
+        }
+        return false
         
       }
-      // 横
-      function horizontal() {
-        piecesCount.forEach(row => {
-          
-        })
-      }
-      // 竖
-      function vertical(params) {
+
+      function getDirCount(i, j, curDir, curPiece) {
+        let curCount = 1
+        console.log(i , j);
         
-      }
-      // 斜
-      function oblique(params) {
-        
+        const targetPiece = piecesCount[i][j]
+
+        if (!targetPiece) {
+          return curCount
+        }else if (targetPiece === curPiece) {
+          const index = dirs.findIndex(dir => dir === curDir)
+          const ii = dirOprs[index][0]
+          const jj = dirOprs[index][1]
+        console.log(ii , jj, piecesCount);
+
+          // 得到当前方向自己的count = 前一个count + 1
+          curCount = getDirCount(i + ii, j + jj, curDir, targetPiece) + 1
+
+          // 当前方向上所有的棋子反方向的count +  1
+          const revDir = dirs[dirs.length - index]
+          process['' + i +j][revDir] = getDirCount(i + ii, j + jj, curDir, targetPiece) + 1
+        }else {
+          // 表示为对方棋子
+          curCount = -2 
+          return curCount
+        }
+        if (curCount >= 5) {
+          over = true
+          msg = curPiece === 1 ? 'you win!' :  
+                curPiece === 2 ? 'computer wins!' : ''
+        }
+        return curCount
       }
 
     </script>
