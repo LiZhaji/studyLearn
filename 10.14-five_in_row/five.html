@@ -328,7 +328,7 @@
           // 目标count = 当前count + 1
           const ii = dirOprs[index][0];
           const jj = dirOprs[index][1];
-          const curCount = process["" + i + j][curDir];
+          const curCount = process["" + i + j][curDir] > 0 ? process["" + i + j][curDir] : 1;
           tarCount = curCount + 1;
 
           // 当前方向上所有的棋子反方向的count + n
