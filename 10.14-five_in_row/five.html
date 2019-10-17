@@ -51,6 +51,9 @@
         font-size: 14px;
         background: linear-gradient(#f0f0f0, #c2b6b6, #f0f0f0);
       }
+      #playAgain {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -58,34 +61,55 @@
   <del>dellll</del>  -->
     <div class="rela">
       <canvas id="rows" width="800" height="800"></canvas>
+      <div id="tools">
+        <p>黑方: <span id="blackWins"></span></p>
+        <p>白方: <span id="whiteWins"></span></p>
+        <p><button data-reop="1" class="btn">重开</button></p>
+        <p><button data-reop="2" class="btn">重选</button></p>
+      </div>
     </div>
+
     <div id="playSelect" class="dialog">
       <div class="box">
         <p class="title">请选择游戏类型：</p>
         <p class="around">
-          <button data-play="0" class="btn play_style">和电脑玩</button>
-          <button data-play="1" class="btn play_style">我有俩人</button>
+          <button data-play="0" class="btn">和电脑玩</button>
+          <button data-play="1" class="btn">我有俩人</button>
         </p>
       </div>
     </div>
-    <div>
-
+    <div id="playAgain" class="dialog">
+      <div class="box">
+        <p id="winerTitle" class="title"></p>
+        <p class="around">
+          <button id="keepGoing" class="btn">继续</button>
+        </p>
+      </div>
     </div>
-
     <script>
 
+      // TODO
+      // wins的数量
+
+      // 可修改变量
       const rows = {
         rowNum: 16,
         sideL: 50,
         pieceR: 15,
         validR: 15 // 点击的有效范围
       };
+      const boardSideL = rows.rowNum * rows.sideL;
 
       const cv = document.querySelector("#rows");
       const ctx = cv.getContext("2d");
-      const msgP = document.querySelector(".title");
-      const playDialog = document.querySelector("#playSelect");
-      const boardSideL = rows.rowNum * rows.sideL;
+
+      const playSelectDia = document.querySelector("#playSelect");
+      const playAgainDia = document.querySelector("#playAgain");
+      const msgP = document.querySelector("#winerTitle");
+
+      const blackWins = document.querySelector("#blackWins");
+      const whiteWins = document.querySelector("#whiteWins");
+
       const dirs = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
       const dirOprs = [
         [-1, -1],
@@ -97,36 +121,70 @@
         [0, 1],
         [1, 1]
       ];
-      const result = {};
+      const result = {
+        black: 0,
+        white: 0
+      };
       let piecesCount = []; // 棋盘棋子情况
       let process = {}; // 棋子每个方向的自身个数
-      let msg = "";
       let playStyle = "";
       let blackTime = true;
-      let over = false;
+      let gameover = false;
+      let blackSuc = true;
 
-      playSelect();
+      // 绑定所有按钮的事件监听
+      bindEvent();
 
-      function playSelect() {
-        playDialog.addEventListener("click", e => {
-          const playN = e.target.dataset.play || "";
-          if (!playN) {
+      function bindEvent() {
+
+        // 选择游戏
+        playSelectDia.addEventListener("click", initGame);
+
+        // 一局结束后 新一局游戏
+        const keepGoing = document.querySelector("#keepGoing");
+        keepGoing.addEventListener("click", () => {
+          initBoard();
+          playAgainDia.style.display = "none";
+        });
+
+        // 新一局游戏 或 重新选择游戏
+        const tools = document.querySelector("#tools");
+        tools.addEventListener('click', e => {
+          const opt = e.target.dataset.reop || "";
+          if (!opt) {
             return;
           }
-          playStyle = playN;
-          playDialog.style.display = "none";
+          opt === "1" ? initBoard() : playSelectDia.style.display = 'flex'
 
-          init();
         });
       }
 
-      function init() {
+      // 初始化游戏，重新选择
+      function initGame(e) {
+        playSelectDia.style.display = 'flex'
+
+        const playN = e.target.dataset.play || "";
+        if (!playN) {
+          return;
+        }
+        playStyle = playN;
+
+        result.black = 0;
+        result.white = 0;
+        changeResult(result.black, result.white);
+
+        initBoard();
+        playSelectDia.style.display = "none";
+      }
+
+      // 初始化棋盘
+      function initBoard() {
+
         cv.removeEventListener("click", handleDown);
 
         process = {};
-        msg = "";
         blackTime = true;
-        over = false;
+        gameover = false;
         piecesCount = [];
         for (let i = 0; i <= rows.rowNum; i++) {
           const row = [];
@@ -136,15 +194,18 @@
           piecesCount.push(row);
         }
 
+        ctx.clearRect(0, 0, boardSideL, boardSideL);
+        printBoard();
+
+        // 根据选择的游戏类型进行下棋函数初始化
         downWhite = downFnInit().downWhite;
         downAuto = downFnInit().downAuto;
 
-        ctx.clearRect(0, 0, boardSideL, boardSideL);
-        pirntRows();
-        downByTourist();
+        cv.addEventListener("click", handleDown);
       }
 
       function downFnInit() {
+        // 0：跟电脑下  1：都用户下
         if (playStyle === "0") {
           return {
             downWhite: async () => {
@@ -188,7 +249,7 @@
         }
       }
 
-      function pirntRows() {
+      function printBoard() {
         ctx.strokeRect(0, 0, boardSideL, boardSideL);
         for (let i = 0; i <= rows.rowNum; i++) {
           for (let j = 0; j <= rows.rowNum; j++) {
@@ -202,7 +263,7 @@
         }
       }
 
-      // 画棋子
+      // 生成一颗棋子
       function printPiece(x, y, color) {
         return new Promise(r => {
           ctx.beginPath();
@@ -217,15 +278,12 @@
         });
       }
 
-      // 游客下棋
-      function downByTourist() {
-        cv.addEventListener("click", handleDown);
-      }
-
+      // 处理用户点击棋盘事件
       function handleDown(e) {
-        if (over) {
+        if (gameover) {
           return;
         }
+        // 最外层点击无效，判断为越界
         const crossX =
           e.offsetX < rows.sideL / 2 ||
           e.offsetX > rows.sideL * (rows.rowNum - 0.5);
@@ -236,18 +294,24 @@
           console.log("越界了！");
           return;
         }
-        const x = Math.round(e.offsetX / 50);
-        const y = Math.round(e.offsetY / 50);
-        if (piecesCount[x][y]) {
-          console.log(x, y, piecesCount[x][y], piecesCount);
 
+        // 对应的二维位置
+        const x = Math.round(e.offsetX / rows.sideL);
+        const y = Math.round(e.offsetY / rows.sideL);
+        if (piecesCount[x][y]) {
           console.log("重复点击！");
           return;
         }
-        const focusX = x * 50;
-        const focusY = y * 50;
+
+        // 对应的canvas的位置
+        const focusX = x * rows.sideL;
+        const focusY = y * rows.sideL;
+
+        // 点击位置距离圆心位置的长度
         const distanceX = crossX ? Infinity : Math.abs(e.offsetX - focusX);
         const distanceY = crossY ? Infinity : Math.abs(e.offsetY - focusY);
+
+        // 根据长度判断点击是否有效，确定棋子的圆心
         const pieceX = distanceX <= rows.validR ? focusX : -1;
         const pieceY = distanceY <= rows.validR ? focusY : -1;
         if (pieceX === -1 || pieceY === -1) {
@@ -258,8 +322,13 @@
         downAuto(x, y, pieceX, pieceY);
       }
 
+      // 是否需要自动化下白棋, 由 playN (游戏类型)决定，在 initGame() 中
       function downAuto() {}
 
+      // 如何下白棋, 同上
+      function downWhite() {}
+
+      // 下黑棋
       async function downBlack(x, y, pieceX, pieceY) {
         await printPiece(pieceX, pieceY, "black");
         piecesCount[x][y] = 1;
@@ -268,18 +337,25 @@
         if (ifSuccess(x, y)) {
           return;
         }
-
       }
-
-      // 下白棋
-      function downWhite() {}
 
       // 是否获胜
       function ifSuccess(x, y) {
+
         if (success(x, y)) {
+          let msg = "";
+          if (gameover && blackSuc) {
+            msg = "black wins!";
+            result.black += 1;
+          } else if (gameover && !blackSuc) {
+            msg = "white wins!";
+            result.white += 1;
+          }
           msgP.innerText = msg;
-          playDialog.style.display = "flex";
-          init();
+          playAgainDia.style.display = "flex";
+          console.log(result);
+
+          changeResult(result.black, result.white);
           return true;
         }
         return false;
@@ -287,14 +363,16 @@
 
       // 获胜
       function success(i, j) {
-        const curPiece = piecesCount[i][j];
+        const curPiece = piecesCount[i][j]; // 当前位置 0: 空, 1: 黑棋, 2: 白棋
         const key = "" + i + j;
         process[key] = process[key] || {};
         const dirs = process[key];
         const tempDir = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
+
+        // 按照tempDir的顺序 计算该棋子每个方向的相同棋子数
         for (let jj = j - 1; jj <= j + 1; jj++) {
           for (let ii = i - 1; ii <= i + 1; ii++) {
-            // 该点本身不参与记录
+            // 该位置本身不参与记录
             if (jj === j && ii === i) {
               continue;
             }
@@ -310,67 +388,68 @@
         }
         process[key] = dirs;
         console.log(piecesCount, process);
-        if (over) {
+        if (gameover) {
           return true;
         }
         return false;
       }
 
       function getDirCount(i, j, curDir, curPiece) {
-        const targetPiece = piecesCount[i][j];
+        
+        const targetPiece = piecesCount[i][j]; // 该方向上的第一个棋子
         const index = dirs.findIndex(dir => dir === curDir);
         const revDir = dirs[dirs.length - index - 1];
         let tarCount = 1;
 
+        // 如果第一颗棋子为空，返回1，表示只有它本身
         if (!targetPiece) {
           return tarCount;
         } else if (targetPiece === curPiece) {
-          // 目标count = 当前count + 1
+          // 1. 目标count = 当前count + 1
           const ii = dirOprs[index][0];
           const jj = dirOprs[index][1];
-          const curCount = process["" + i + j][curDir] > 0 ? process["" + i + j][curDir] : 1;
+          const curCount =
+            process["" + i + j][curDir] > 0 ? process["" + i + j][curDir] : 1; // 小于0表示没有一样的棋子，不能用该值参与计算
           tarCount = curCount + 1;
 
-          // 当前方向上所有的棋子反方向的count + n
-          // 新棋子的反方向有无自家棋子,有则需要重新赋值
-          const revCount = process["" + (i - ii) + (j - jj)][revDir] > 1 ? process["" + (i - ii) + (j - jj)][revDir] : 1
+          // 2. 当前方向上所有的棋子反方向的count 更新
+          // 需判断新棋子的反方向有无自家棋子,有则需要全部重新赋值
+          const revCount =
+            process["" + (i - ii) + (j - jj)][revDir] > 1 // 大于1表示有
+              ? process["" + (i - ii) + (j - jj)][revDir]
+              : 1;
           for (let k = 0; k < curCount; k++) {
             process["" + (i + ii * k) + (j + jj * k)][revDir] += revCount;
           }
+
+          // 11011,修改这种情况的bug
           if (revCount > 1) {
             for (let k = 2; k <= revCount; k++) {
-              let rp = process["" + (i - ii * k) + (j - jj * k)][curDir] += tarCount - 1 // 减去新棋的重复
+              let rp = (process["" + (i - ii * k) + (j - jj * k)][curDir] +=
+                tarCount - 1); // 减去新棋的重复
               if (rp >= 5) {
-                over = true;
-                msg =
-                  curPiece === 1
-                    ? "balck wins!"
-                    : curPiece === 2
-                    ? "white wins!"
-                    : "";
-                curPiece === 1 ? (result.black += 1) : (result.white += 1);
-                return
+                gameover = true;
+                blackSuc = curPiece === 1 ? true : false;
+                return;
               }
             }
           }
-          // process['' + i + j][revDir] = getDirCount(i + ii, j + jj, curDir, targetPiece) + 1
         } else {
-          // 表示当前棋为对方棋子, 对方棋子的反方向count = -2
+          // 表示第一颗棋为对方棋子, 不仅要返回-2, 还要设置对方棋反方向的count = -2
           tarCount = -2;
           process["" + i + j][revDir] = -2;
           return tarCount;
         }
         if (tarCount >= 5) {
-          over = true;
-          msg =
-            curPiece === 1
-              ? "balck wins!"
-              : curPiece === 2
-              ? "white wins!"
-              : "";
-          curPiece === 1 ? (result.black += 1) : (result.white += 1);
+          gameover = true;
+          blackSuc = curPiece === 1 ? true : false;
         }
         return tarCount;
+      }
+
+      function changeResult(bl, wh) {
+        blackWins.innerText = result.black;
+        whiteWins.innerText = result.white;
       }
     </script>
   </body>
