@@ -4,22 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>five in row</title>
+    <title>五子棋</title>
+    <link rel ="shortcut icon" type="image/x-icon" href="avatar.jpg">
     <link rel="stylesheet" href="five.css" />
     <!-- <style>
     @import url(./five.css);
     </style> -->
   </head>
   <body>
-    <!-- <s>ssss</s>
-  <del>dellll</del>  -->
     <div class="rela">
       <canvas id="rows" width="800" height="800"></canvas>
       <div id="tools">
-        <p>黑方: <span id="blackWins"></span></p>
-        <p>白方: <span id="whiteWins"></span></p>
-        <p><button data-reop="1" class="btn">重开一局</button></p>
-        <p><button data-reop="2" class="btn">重新选择</button></p>
+        <div>
+          <p>黑方: <span id="blackWins"></span></p>
+          <p>白方: <span id="whiteWins"></span></p>
+        </div>
+        <div>
+          <p><button data-reop="1" class="btn">重开一局</button></p>
+          <p><button data-reop="2" class="btn">重新选择</button></p>
+        </div>
       </div>
     </div>
 
@@ -41,17 +44,17 @@
       </div>
     </div>
     <script>
-      // TODO
-      // wins的数量
-
       // 可修改变量
       const rows = {
         rowNum: 16,
         sideL: 50,
         pieceR: 15,
-        validR: 15 // 点击的有效范围
+        validR: 15, // 点击的有效范围
+        boardSideL: () => {
+          return this.rows.rowNum * rows.sideL;
+        }
       };
-      const boardSideL = rows.rowNum * rows.sideL;
+      let boardSideL = rows.rowNum * rows.sideL;
 
       const cv = document.querySelector("#rows");
       const ctx = cv.getContext("2d");
@@ -85,9 +88,28 @@
       let gameover = false;
       let blackSuc = true;
 
+
+      // 根据屏幕初始化画布大小
+      initCanvas();
+
       // 绑定所有按钮的事件监听
       bindEvent();
 
+
+      // let isPhone = false;
+
+      function initCanvas() {
+        if (/Android|webOS|iPhone|iPod|BlackBerry|iPad/i.test(navigator.userAgent)) {
+          // isPhone = true;
+          const screenW = window.screen.width;
+          rows.pieceR = 12;
+          rows.sideL = 30;
+          rows.rowNum = Math.floor((screenW - 20) / rows.sideL);
+          boardSideL = rows.rowNum * rows.sideL;
+          cv.width = boardSideL;
+          cv.height = boardSideL;
+        }
+      }
       function bindEvent() {
         // 选择游戏
         playSelectDia.addEventListener("click", initGame);
@@ -182,7 +204,6 @@
 
                     hasP = false || pDirs[revDir] === 1;
                     totL += pDirs[dir];
-                    console.log(hasP, dir, pDirs[dir]);
 
                     if (
                       hasP &&
@@ -194,7 +215,6 @@
                       dangerP.y = j;
                       dangerP.totL = totL;
                       dangerP.dir = dir;
-                      console.log(dangerP);
                     }
                   }
                 }
@@ -230,7 +250,7 @@
               //   x = Math.ceil(Math.random() * (rows.rowNum - 2));
               //   y = Math.ceil(Math.random() * (rows.rowNum - 2));
               // }
-              await printPiece(x * 50, y * 50, "wheat");
+              await printPiece(x * rows.sideL, y * rows.sideL, "wheat");
               piecesCount[x][y] = 2;
               blackTime = true;
 
@@ -286,7 +306,6 @@
           ctx.fillStyle = color;
           ctx.fill();
           ctx.closePath();
-          console.log("print piece!");
 
           r();
         });
@@ -367,7 +386,6 @@
           }
           msgP.innerText = msg;
           playAgainDia.style.display = "flex";
-          console.log(result);
 
           changeResult(result.black, result.white);
           return true;

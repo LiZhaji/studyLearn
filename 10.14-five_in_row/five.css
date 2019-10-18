@@ -1,5 +1,15 @@
+*{
+  margin: 0;
+  padding: 0;
+}
 body {
   position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 10px;
+}
+#rows{
+  margin: 10px;
 }
 .rela {
   position: relative;
@@ -29,6 +39,7 @@ body {
 .around {
   display: flex;
   justify-content: space-around;
+  margin: 15px 0px;
 }
 .btn {
   background: linear-gradient(#f0f0f0, #f0f0f0, #c5bcbc, #f0f0f0);
@@ -45,4 +56,13 @@ body {
 }
 #playAgain {
   display: none;
+}
+#tools{
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+#tools p {
+  font-size: 20px;
+  margin: 10px 0;
 }
