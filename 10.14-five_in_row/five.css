@@ -1,0 +1,48 @@
+body {
+  position: absolute;
+}
+.rela {
+  position: relative;
+}
+.dialog {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: #80808087;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.box {
+  width: 200px;
+  background: #f3f2f2;
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid;
+  text-align: center;
+}
+.title {
+  font-size: 25px;
+}
+.around {
+  display: flex;
+  justify-content: space-around;
+}
+.btn {
+  background: linear-gradient(#f0f0f0, #f0f0f0, #c5bcbc, #f0f0f0);
+  border: 1px solid #a09d9d;
+  border-radius: 2px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  outline: none;
+}
+.btn:hover {
+  font-size: 14px;
+  background: linear-gradient(#f0f0f0, #c2b6b6, #f0f0f0);
+}
+#playAgain {
+  display: none;
+}

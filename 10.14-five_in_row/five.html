@@ -5,56 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>five in row</title>
-    <style>
-      body {
-        position: absolute;
-      }
-      .rela {
-        position: relative;
-      }
-      .dialog {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        background: #80808087;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .box {
-        width: 200px;
-        background: #f3f2f2;
-        padding: 20px;
-        border-radius: 5px;
-        border: 1px solid;
-        text-align: center;
-      }
-      .title {
-        font-size: 25px;
-      }
-      .around {
-        display: flex;
-        justify-content: space-around;
-      }
-      .btn {
-        background: linear-gradient(#f0f0f0, #f0f0f0, #c5bcbc, #f0f0f0);
-        border: 1px solid #a09d9d;
-        border-radius: 2px;
-        padding: 4px 8px;
-        cursor: pointer;
-        font-size: 13px;
-        outline: none;
-      }
-      .btn:hover {
-        font-size: 14px;
-        background: linear-gradient(#f0f0f0, #c2b6b6, #f0f0f0);
-      }
-      #playAgain {
-        display: none;
-      }
-    </style>
+    <link rel="stylesheet" href="five.css" />
+    <!-- <style>
+    @import url(./five.css);
+    </style> -->
   </head>
   <body>
     <!-- <s>ssss</s>
@@ -64,8 +18,8 @@
       <div id="tools">
         <p>黑方: <span id="blackWins"></span></p>
         <p>白方: <span id="whiteWins"></span></p>
-        <p><button data-reop="1" class="btn">重开</button></p>
-        <p><button data-reop="2" class="btn">重选</button></p>
+        <p><button data-reop="1" class="btn">重开一局</button></p>
+        <p><button data-reop="2" class="btn">重新选择</button></p>
       </div>
     </div>
 
@@ -87,7 +41,6 @@
       </div>
     </div>
     <script>
-
       // TODO
       // wins的数量
 
@@ -111,16 +64,16 @@
       const whiteWins = document.querySelector("#whiteWins");
 
       const dirs = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
-      const dirOprs = [
-        [-1, -1],
-        [0, -1],
-        [1, -1],
-        [-1, 0],
-        [1, 0],
-        [-1, 1],
-        [0, 1],
-        [1, 1]
-      ];
+      const dirOprs = {
+        lup: [-1, -1],
+        up: [0, -1],
+        rup: [1, -1],
+        l: [-1, 0],
+        r: [1, 0],
+        lbt: [-1, 1],
+        bt: [0, 1],
+        rbt: [1, 1]
+      };
       const result = {
         black: 0,
         white: 0
@@ -136,7 +89,6 @@
       bindEvent();
 
       function bindEvent() {
-
         // 选择游戏
         playSelectDia.addEventListener("click", initGame);
 
@@ -149,19 +101,18 @@
 
         // 新一局游戏 或 重新选择游戏
         const tools = document.querySelector("#tools");
-        tools.addEventListener('click', e => {
+        tools.addEventListener("click", e => {
           const opt = e.target.dataset.reop || "";
           if (!opt) {
             return;
           }
-          opt === "1" ? initBoard() : playSelectDia.style.display = 'flex'
-
+          opt === "1" ? initBoard() : (playSelectDia.style.display = "flex");
         });
       }
 
       // 初始化游戏，重新选择
       function initGame(e) {
-        playSelectDia.style.display = 'flex'
+        playSelectDia.style.display = "flex";
 
         const playN = e.target.dataset.play || "";
         if (!playN) {
@@ -179,7 +130,6 @@
 
       // 初始化棋盘
       function initBoard() {
-
         cv.removeEventListener("click", handleDown);
 
         process = {};
@@ -209,13 +159,77 @@
         if (playStyle === "0") {
           return {
             downWhite: async () => {
-              // 随机下
-              let x = Math.ceil(Math.random() * (rows.rowNum - 2));
-              let y = Math.ceil(Math.random() * (rows.rowNum - 2));
-              while (piecesCount[x][y]) {
-                x = Math.ceil(Math.random() * (rows.rowNum - 2));
-                y = Math.ceil(Math.random() * (rows.rowNum - 2));
+              let x = 0;
+              let y = 0;
+
+              const dangerP = {
+                x: 0,
+                y: 0,
+                length: 0,
+                totL: 0,
+                dir: ""
+              };
+              // 找到最具危险性的黑棋
+              for (const p in process) {
+                if (p[0] === "1") {
+                  const pDirs = process[p];
+                  const i = +p.match(/(?<=_x).*(?=_y)/)[0];
+                  const j = +p.match(/(?<=_y).*/)[0];
+                  let totL = 0;
+                  for (const dir in pDirs) {
+                    const index = dirs.findIndex(d => d === dir);
+                    const revDir = dirs[dirs.length - index - 1];
+
+                    hasP = false || pDirs[revDir] === 1;
+                    totL += pDirs[dir];
+                    console.log(hasP, dir, pDirs[dir]);
+
+                    if (
+                      hasP &&
+                      (pDirs[dir] > dangerP.length ||
+                        (pDirs[dir] === dangerP.length && totL > dangerP.totL))
+                    ) {
+                      dangerP.length = pDirs[dir];
+                      dangerP.x = i;
+                      dangerP.y = j;
+                      dangerP.totL = totL;
+                      dangerP.dir = dir;
+                      console.log(dangerP);
+                    }
+                  }
+                }
               }
+
+              if (dangerP.length <= 2) {
+                let k = Math.floor(Math.random() * 8);
+                let dir = dirs[k];
+                let xx = dirOprs[dir][0];
+                let yy = dirOprs[dir][1];
+                while (piecesCount[dangerP.x + xx][dangerP.y + yy]) {
+                  k = Math.floor(Math.random() * 8);
+                  dir = dirs[k];
+                  xx = dirOprs[dir][0];
+                  yy = dirOprs[dir][1];
+                }
+                x = dangerP.x + xx;
+                y = dangerP.y + yy;
+              } else {
+                const index = dirs.findIndex(d => d === dangerP.dir);
+                const revDir = dirs[dirs.length - index - 1];
+                const ii = dirOprs[revDir][0];
+                const jj = dirOprs[revDir][1];
+
+                x = dangerP.x + ii;
+                y = dangerP.y + jj;
+              }
+
+              // 随机下
+              // x = Math.ceil(Math.random() * (rows.rowNum - 2));
+              // y = Math.ceil(Math.random() * (rows.rowNum - 2));
+              // while (piecesCount[x][y]) {
+              //   x = Math.ceil(Math.random() * (rows.rowNum - 2));
+              //   y = Math.ceil(Math.random() * (rows.rowNum - 2));
+              // }
               await printPiece(x * 50, y * 50, "wheat");
               piecesCount[x][y] = 2;
               blackTime = true;
@@ -224,9 +238,9 @@
                 return;
               }
             },
-            downAuto: (x, y, pieceX, pieceY) => {
-              downBlack(x, y, pieceX, pieceY);
-              downWhite();
+            downAuto: async (x, y, pieceX, pieceY) => {
+              await downBlack(x, y, pieceX, pieceY);
+              gameover ? "" : downWhite();
             }
           };
         } else if (playStyle === "1") {
@@ -334,14 +348,14 @@
         piecesCount[x][y] = 1;
         blackTime = false;
 
-        if (ifSuccess(x, y)) {
-          return;
-        }
+        return new Promise(r => {
+          ifSuccess(x, y);
+          r();
+        });
       }
 
       // 是否获胜
       function ifSuccess(x, y) {
-
         if (success(x, y)) {
           let msg = "";
           if (gameover && blackSuc) {
@@ -364,7 +378,7 @@
       // 获胜
       function success(i, j) {
         const curPiece = piecesCount[i][j]; // 当前位置 0: 空, 1: 黑棋, 2: 白棋
-        const key = "" + i + j;
+        const key = "" + curPiece + "_x" + i + "_y" + j;
         process[key] = process[key] || {};
         const dirs = process[key];
         const tempDir = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
@@ -372,6 +386,10 @@
         // 按照tempDir的顺序 计算该棋子每个方向的相同棋子数
         for (let jj = j - 1; jj <= j + 1; jj++) {
           for (let ii = i - 1; ii <= i + 1; ii++) {
+            if (gameover) {
+              return true;
+            }
+
             // 该位置本身不参与记录
             if (jj === j && ii === i) {
               continue;
@@ -388,14 +406,11 @@
         }
         process[key] = dirs;
         console.log(piecesCount, process);
-        if (gameover) {
-          return true;
-        }
+
         return false;
       }
 
       function getDirCount(i, j, curDir, curPiece) {
-        
         const targetPiece = piecesCount[i][j]; // 该方向上的第一个棋子
         const index = dirs.findIndex(dir => dir === curDir);
         const revDir = dirs[dirs.length - index - 1];
@@ -406,27 +421,36 @@
           return tarCount;
         } else if (targetPiece === curPiece) {
           // 1. 目标count = 当前count + 1
-          const ii = dirOprs[index][0];
-          const jj = dirOprs[index][1];
+          const ii = dirOprs[curDir][0];
+          const jj = dirOprs[curDir][1];
           const curCount =
-            process["" + i + j][curDir] > 0 ? process["" + i + j][curDir] : 1; // 小于0表示没有一样的棋子，不能用该值参与计算
+            process["" + targetPiece + "_x" + i + "_y" + j][curDir] > 0
+              ? process["" + targetPiece + "_x" + i + "_y" + j][curDir]
+              : 1; // 小于0表示没有一样的棋子，不能用该值参与计算
           tarCount = curCount + 1;
 
           // 2. 当前方向上所有的棋子反方向的count 更新
           // 需判断新棋子的反方向有无自家棋子,有则需要全部重新赋值
           const revCount =
-            process["" + (i - ii) + (j - jj)][revDir] > 1 // 大于1表示有
-              ? process["" + (i - ii) + (j - jj)][revDir]
+            process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][
+              revDir
+            ] > 1 // 大于1表示有
+              ? process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][
+                  revDir
+                ]
               : 1;
           for (let k = 0; k < curCount; k++) {
-            process["" + (i + ii * k) + (j + jj * k)][revDir] += revCount;
+            process[
+              "" + targetPiece + "_x" + (i + ii * k) + "_y" + (j + jj * k)
+            ][revDir] += revCount;
           }
 
           // 11011,修改这种情况的bug
           if (revCount > 1) {
             for (let k = 2; k <= revCount; k++) {
-              let rp = (process["" + (i - ii * k) + (j - jj * k)][curDir] +=
-                tarCount - 1); // 减去新棋的重复
+              let rp = (process[
+                "" + targetPiece + "_x" + (i - ii * k) + "_y" + (j - jj * k)
+              ][curDir] += tarCount - 1); // 减去新棋的重复
               if (rp >= 5) {
                 gameover = true;
                 blackSuc = curPiece === 1 ? true : false;
@@ -437,7 +461,7 @@
         } else {
           // 表示第一颗棋为对方棋子, 不仅要返回-2, 还要设置对方棋反方向的count = -2
           tarCount = -2;
-          process["" + i + j][revDir] = -2;
+          process["" + targetPiece + "_x" + i + "_y" + j][revDir] = -2;
           return tarCount;
         }
         if (tarCount >= 5) {
