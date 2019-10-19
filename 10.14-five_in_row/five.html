@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>五子棋</title>
-    <link rel ="shortcut icon" type="image/x-icon" href="avatar.jpg">
+    <link rel="shortcut icon" type="image/x-icon" href="avatar.jpg" />
     <link rel="stylesheet" href="five.css" />
     <!-- <style>
     @import url(./five.css);
@@ -43,6 +43,11 @@
         </p>
       </div>
     </div>
+    <script src="./js/vars.js"></script>
+    <script src="./js/canvas.js"></script>
+    <script src="./js/computerDown.js"></script>
+    <script src="./js/initFn.js"></script>
+    <script src="./js/success.js"></script>
     <script>
       // 可修改变量
       const rows = {
@@ -56,38 +61,6 @@
       };
       let boardSideL = rows.rowNum * rows.sideL;
 
-      const cv = document.querySelector("#rows");
-      const ctx = cv.getContext("2d");
-
-      const playSelectDia = document.querySelector("#playSelect");
-      const playAgainDia = document.querySelector("#playAgain");
-      const msgP = document.querySelector("#winerTitle");
-
-      const blackWins = document.querySelector("#blackWins");
-      const whiteWins = document.querySelector("#whiteWins");
-
-      const dirs = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
-      const dirOprs = {
-        lup: [-1, -1],
-        up: [0, -1],
-        rup: [1, -1],
-        l: [-1, 0],
-        r: [1, 0],
-        lbt: [-1, 1],
-        bt: [0, 1],
-        rbt: [1, 1]
-      };
-      const result = {
-        black: 0,
-        white: 0
-      };
-      let piecesCount = []; // 棋盘棋子情况
-      let process = {}; // 棋子每个方向的自身个数
-      let playStyle = "";
-      let blackTime = true;
-      let gameover = false;
-      let blackSuc = true;
-
 
       // 根据屏幕初始化画布大小
       initCanvas();
@@ -95,12 +68,10 @@
       // 绑定所有按钮的事件监听
       bindEvent();
 
-
-      // let isPhone = false;
-
       function initCanvas() {
-        if (/Android|webOS|iPhone|iPod|BlackBerry|iPad/i.test(navigator.userAgent)) {
-          // isPhone = true;
+        if (
+          /Android|webOS|iPhone|iPod|BlackBerry|iPad/i.test(navigator.userAgent)
+        ) {
           const screenW = window.screen.width;
           rows.pieceR = 12;
           rows.sideL = 30;
@@ -110,19 +81,18 @@
           cv.height = boardSideL;
         }
       }
+
       function bindEvent() {
         // 选择游戏
         playSelectDia.addEventListener("click", initGame);
 
-        // 一局结束后 新一局游戏
-        const keepGoing = document.querySelector("#keepGoing");
-        keepGoing.addEventListener("click", () => {
-          initBoard();
-          playAgainDia.style.display = "none";
-        });
+        // 用户下棋
+        cv.addEventListener("click", handleDown);
+
+        // 初始化棋盘
+        keepGoing.addEventListener("click", initBoard);
 
         // 新一局游戏 或 重新选择游戏
-        const tools = document.querySelector("#tools");
         tools.addEventListener("click", e => {
           const opt = e.target.dataset.reop || "";
           if (!opt) {
@@ -152,7 +122,9 @@
 
       // 初始化棋盘
       function initBoard() {
-        cv.removeEventListener("click", handleDown);
+        playAgainDia.style.display === "none"
+          ? ""
+          : (playAgainDia.style.display = "none");
 
         process = {};
         blackTime = true;
@@ -170,94 +142,16 @@
         printBoard();
 
         // 根据选择的游戏类型进行下棋函数初始化
-        downWhite = downFnInit().downWhite;
-        downAuto = downFnInit().downAuto;
-
-        cv.addEventListener("click", handleDown);
+        const fns = downFnInit();
+        downWhite = fns.downWhite;
+        downAuto = fns.downAuto;
       }
 
       function downFnInit() {
         // 0：跟电脑下  1：都用户下
         if (playStyle === "0") {
           return {
-            downWhite: async () => {
-              let x = 0;
-              let y = 0;
-
-              const dangerP = {
-                x: 0,
-                y: 0,
-                length: 0,
-                totL: 0,
-                dir: ""
-              };
-              // 找到最具危险性的黑棋
-              for (const p in process) {
-                if (p[0] === "1") {
-                  const pDirs = process[p];
-                  const i = +p.match(/(?<=_x).*(?=_y)/)[0];
-                  const j = +p.match(/(?<=_y).*/)[0];
-                  let totL = 0;
-                  for (const dir in pDirs) {
-                    const index = dirs.findIndex(d => d === dir);
-                    const revDir = dirs[dirs.length - index - 1];
-
-                    hasP = false || pDirs[revDir] === 1;
-                    totL += pDirs[dir];
-
-                    if (
-                      hasP &&
-                      (pDirs[dir] > dangerP.length ||
-                        (pDirs[dir] === dangerP.length && totL > dangerP.totL))
-                    ) {
-                      dangerP.length = pDirs[dir];
-                      dangerP.x = i;
-                      dangerP.y = j;
-                      dangerP.totL = totL;
-                      dangerP.dir = dir;
-                    }
-                  }
-                }
-              }
-
-              if (dangerP.length <= 2) {
-                let k = Math.floor(Math.random() * 8);
-                let dir = dirs[k];
-                let xx = dirOprs[dir][0];
-                let yy = dirOprs[dir][1];
-                while (piecesCount[dangerP.x + xx][dangerP.y + yy]) {
-                  k = Math.floor(Math.random() * 8);
-                  dir = dirs[k];
-                  xx = dirOprs[dir][0];
-                  yy = dirOprs[dir][1];
-                }
-                x = dangerP.x + xx;
-                y = dangerP.y + yy;
-              } else {
-                const index = dirs.findIndex(d => d === dangerP.dir);
-                const revDir = dirs[dirs.length - index - 1];
-                const ii = dirOprs[revDir][0];
-                const jj = dirOprs[revDir][1];
-
-                x = dangerP.x + ii;
-                y = dangerP.y + jj;
-              }
-
-              // 随机下
-              // x = Math.ceil(Math.random() * (rows.rowNum - 2));
-              // y = Math.ceil(Math.random() * (rows.rowNum - 2));
-              // while (piecesCount[x][y]) {
-              //   x = Math.ceil(Math.random() * (rows.rowNum - 2));
-              //   y = Math.ceil(Math.random() * (rows.rowNum - 2));
-              // }
-              await printPiece(x * rows.sideL, y * rows.sideL, "wheat");
-              piecesCount[x][y] = 2;
-              blackTime = true;
-
-              if (ifSuccess(x, y)) {
-                return;
-              }
-            },
+            downWhite: computerDown,
             downAuto: async (x, y, pieceX, pieceY) => {
               await downBlack(x, y, pieceX, pieceY);
               gameover ? "" : downWhite();
@@ -281,34 +175,6 @@
             }
           };
         }
-      }
-
-      function printBoard() {
-        ctx.strokeRect(0, 0, boardSideL, boardSideL);
-        for (let i = 0; i <= rows.rowNum; i++) {
-          for (let j = 0; j <= rows.rowNum; j++) {
-            ctx.strokeRect(
-              i * rows.sideL,
-              j * rows.sideL,
-              rows.sideL,
-              rows.sideL
-            );
-          }
-        }
-      }
-
-      // 生成一颗棋子
-      function printPiece(x, y, color) {
-        return new Promise(r => {
-          ctx.beginPath();
-          ctx.moveTo(x + rows.pieceR, y);
-          ctx.arc(x, y, rows.pieceR, 0, Math.PI * 2);
-          ctx.fillStyle = color;
-          ctx.fill();
-          ctx.closePath();
-
-          r();
-        });
       }
 
       // 处理用户点击棋盘事件
@@ -371,122 +237,6 @@
           ifSuccess(x, y);
           r();
         });
-      }
-
-      // 是否获胜
-      function ifSuccess(x, y) {
-        if (success(x, y)) {
-          let msg = "";
-          if (gameover && blackSuc) {
-            msg = "black wins!";
-            result.black += 1;
-          } else if (gameover && !blackSuc) {
-            msg = "white wins!";
-            result.white += 1;
-          }
-          msgP.innerText = msg;
-          playAgainDia.style.display = "flex";
-
-          changeResult(result.black, result.white);
-          return true;
-        }
-        return false;
-      }
-
-      // 获胜
-      function success(i, j) {
-        const curPiece = piecesCount[i][j]; // 当前位置 0: 空, 1: 黑棋, 2: 白棋
-        const key = "" + curPiece + "_x" + i + "_y" + j;
-        process[key] = process[key] || {};
-        const dirs = process[key];
-        const tempDir = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
-
-        // 按照tempDir的顺序 计算该棋子每个方向的相同棋子数
-        for (let jj = j - 1; jj <= j + 1; jj++) {
-          for (let ii = i - 1; ii <= i + 1; ii++) {
-            if (gameover) {
-              return true;
-            }
-
-            // 该位置本身不参与记录
-            if (jj === j && ii === i) {
-              continue;
-            }
-            const curDir = tempDir.shift();
-            // 表示该方向越界了
-            if (jj < 0 || ii < 0 || jj > rows.rowNum || ii > rows.rowNum) {
-              dirs[curDir] = -1;
-              continue;
-            }
-
-            dirs[curDir] = getDirCount(ii, jj, curDir, curPiece);
-          }
-        }
-        process[key] = dirs;
-        console.log(piecesCount, process);
-
-        return false;
-      }
-
-      function getDirCount(i, j, curDir, curPiece) {
-        const targetPiece = piecesCount[i][j]; // 该方向上的第一个棋子
-        const index = dirs.findIndex(dir => dir === curDir);
-        const revDir = dirs[dirs.length - index - 1];
-        let tarCount = 1;
-
-        // 如果第一颗棋子为空，返回1，表示只有它本身
-        if (!targetPiece) {
-          return tarCount;
-        } else if (targetPiece === curPiece) {
-          // 1. 目标count = 当前count + 1
-          const ii = dirOprs[curDir][0];
-          const jj = dirOprs[curDir][1];
-          const curCount =
-            process["" + targetPiece + "_x" + i + "_y" + j][curDir] > 0
-              ? process["" + targetPiece + "_x" + i + "_y" + j][curDir]
-              : 1; // 小于0表示没有一样的棋子，不能用该值参与计算
-          tarCount = curCount + 1;
-
-          // 2. 当前方向上所有的棋子反方向的count 更新
-          // 需判断新棋子的反方向有无自家棋子,有则需要全部重新赋值
-          const revCount =
-            process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][
-              revDir
-            ] > 1 // 大于1表示有
-              ? process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][
-                  revDir
-                ]
-              : 1;
-          for (let k = 0; k < curCount; k++) {
-            process[
-              "" + targetPiece + "_x" + (i + ii * k) + "_y" + (j + jj * k)
-            ][revDir] += revCount;
-          }
-
-          // 11011,修改这种情况的bug
-          if (revCount > 1) {
-            for (let k = 2; k <= revCount; k++) {
-              let rp = (process[
-                "" + targetPiece + "_x" + (i - ii * k) + "_y" + (j - jj * k)
-              ][curDir] += tarCount - 1); // 减去新棋的重复
-              if (rp >= 5) {
-                gameover = true;
-                blackSuc = curPiece === 1 ? true : false;
-                return;
-              }
-            }
-          }
-        } else {
-          // 表示第一颗棋为对方棋子, 不仅要返回-2, 还要设置对方棋反方向的count = -2
-          tarCount = -2;
-          process["" + targetPiece + "_x" + i + "_y" + j][revDir] = -2;
-          return tarCount;
-        }
-        if (tarCount >= 5) {
-          gameover = true;
-          blackSuc = curPiece === 1 ? true : false;
-        }
-        return tarCount;
       }
 
       function changeResult(bl, wh) {
