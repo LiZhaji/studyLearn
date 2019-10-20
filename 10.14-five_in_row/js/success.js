@@ -14,6 +14,19 @@ function ifSuccess(x, y) {
 
     changeResult(result.black, result.white);
     return true;
+  } else {
+    let fullR = 0;
+    piecesCount.forEach(row => {
+      row.findIndex(p => !p) === -1 ? fullR += 1 : '';
+    });
+    if (fullR === piecesCount.length) {
+      let msg = "";
+      msg = "a draw!";
+      msgP.innerText = msg;
+      playAgainDia.style.display = "flex";
+
+      return true;
+    }
   }
   return false;
 }

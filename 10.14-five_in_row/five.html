@@ -49,18 +49,6 @@
     <script src="./js/initFn.js"></script>
     <script src="./js/success.js"></script>
     <script>
-      // 可修改变量
-      const rows = {
-        rowNum: 16,
-        sideL: 50,
-        pieceR: 15,
-        validR: 15, // 点击的有效范围
-        boardSideL: () => {
-          return this.rows.rowNum * rows.sideL;
-        }
-      };
-      let boardSideL = rows.rowNum * rows.sideL;
-
 
       // 根据屏幕初始化画布大小
       initCanvas();
@@ -75,8 +63,9 @@
           const screenW = window.screen.width;
           rows.pieceR = 12;
           rows.sideL = 30;
-          rows.rowNum = Math.floor((screenW - 20) / rows.sideL);
-          boardSideL = rows.rowNum * rows.sideL;
+          rows.rowNum = Math.floor((screenW - 20 - rows.sideL) / rows.sideL);
+          boardSideL = (rows.rowNum + 1) * rows.sideL;
+          blackSideL = rows.sideL / 2;
           cv.width = boardSideL;
           cv.height = boardSideL;
         }
@@ -162,6 +151,7 @@
             downWhite: async (x, y, pieceX, pieceY) => {
               await printPiece(pieceX, pieceY, "wheat");
               piecesCount[x][y] = 2;
+              hadDown += 1
               blackTime = true;
 
               if (ifSuccess(x, y)) {
@@ -182,21 +172,29 @@
         if (gameover) {
           return;
         }
+
         // 最外层点击无效，判断为越界
-        const crossX =
+        /* const crossX =
           e.offsetX < rows.sideL / 2 ||
           e.offsetX > rows.sideL * (rows.rowNum - 0.5);
         const crossY =
           e.offsetY < rows.sideL / 2 ||
           e.offsetY > rows.sideL * (rows.rowNum - 0.5);
+        */
+
+        // 点击留白处，判断为越界
+        const crossX =
+          e.offsetX < blackSideL || e.offsetX > boardSideL - blackSideL;
+        const crossY =
+          e.offsetY < blackSideL || e.offsetY > boardSideL - blackSideL;
         if (crossX || crossY) {
           console.log("越界了！");
           return;
         }
 
         // 对应的二维位置
-        const x = Math.round(e.offsetX / rows.sideL);
-        const y = Math.round(e.offsetY / rows.sideL);
+        const x = Math.round((e.offsetX - blackSideL) / rows.sideL);
+        const y = Math.round((e.offsetY - blackSideL) / rows.sideL);
         if (piecesCount[x][y]) {
           console.log("重复点击！");
           return;
@@ -207,8 +205,8 @@
         const focusY = y * rows.sideL;
 
         // 点击位置距离圆心位置的长度
-        const distanceX = crossX ? Infinity : Math.abs(e.offsetX - focusX);
-        const distanceY = crossY ? Infinity : Math.abs(e.offsetY - focusY);
+        const distanceX = crossX ? Infinity : Math.abs(e.offsetX - focusX - blackSideL);
+        const distanceY = crossY ? Infinity : Math.abs(e.offsetY - focusY - blackSideL);
 
         // 根据长度判断点击是否有效，确定棋子的圆心
         const pieceX = distanceX <= rows.validR ? focusX : -1;
@@ -231,6 +229,7 @@
       async function downBlack(x, y, pieceX, pieceY) {
         await printPiece(pieceX, pieceY, "black");
         piecesCount[x][y] = 1;
+        hadDown += 1
         blackTime = false;
 
         return new Promise(r => {
