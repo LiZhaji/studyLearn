@@ -180,7 +180,23 @@ async function computerDown() {
                 }
                 // 11011 10111
                 if (pDirs[dir] + hadDangerN + 1 === 5) {
-                  assignP()
+                  // assignP()
+                  const ii = dirOprs[revDir][0];
+                  const jj = dirOprs[revDir][1];
+
+                  const x = i + ii;
+                  const y = j + jj;
+                  // next棋子是否越界
+                  if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
+                    continue;
+                  }
+                  nextP[whichP].x = x;
+                  nextP[whichP].y = y;
+                  nextP[whichP].oriX = i;
+                  nextP[whichP].oriY = j;
+
+                  nextP[whichP].length = pDirs[dir];
+                  nextP[whichP].totL = totL;
                   findIt = true;
                   break;
                 }
@@ -197,7 +213,23 @@ async function computerDown() {
                     }
                   }
                   if (!hadRevP) {
-                    assignP()
+                    // assignP()
+                    const ii = dirOprs[revDir][0];
+                    const jj = dirOprs[revDir][1];
+
+                    const x = i + ii;
+                    const y = j + jj;
+                    // next棋子是否越界
+                    if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
+                      continue;
+                    }
+                    nextP[whichP].x = x;
+                    nextP[whichP].y = y;
+                    nextP[whichP].oriX = i;
+                    nextP[whichP].oriY = j;
+
+                    nextP[whichP].length = pDirs[dir];
+                    nextP[whichP].totL = totL;
                   }
                 }
               }
@@ -224,9 +256,24 @@ async function computerDown() {
               (pDirs[dir] === nextP[whichP].length &&
                 totL > nextP[whichP].totL))
           ) {
-            assignP()
-          }
+            // assignP()
+            const ii = dirOprs[revDir][0];
+            const jj = dirOprs[revDir][1];
 
+            const x = i + ii;
+            const y = j + jj;
+            // next棋子是否越界
+            if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
+              continue;
+            }
+            nextP[whichP].x = x;
+            nextP[whichP].y = y;
+            nextP[whichP].oriX = i;
+            nextP[whichP].oriY = j;
+
+            nextP[whichP].length = pDirs[dir];
+            nextP[whichP].totL = totL;
+          }
 
           function assignP() {
             const ii = dirOprs[revDir][0];
@@ -236,7 +283,7 @@ async function computerDown() {
             const y = j + jj;
             // next棋子是否越界
             if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
-              continue;
+              // continue;
             }
             nextP[whichP].x = x;
             nextP[whichP].y = y;
