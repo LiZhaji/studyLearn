@@ -115,8 +115,8 @@ async function computerDown() {
     for (const p in process) {
       if (p[0] === whichP) {
         const pDirs = process[p];
-        const i = +p.match(/(?<=_x).*(?=_y)/)[0];
-        const j = +p.match(/(?<=_y).*/)[0];
+        const i = +p.split("_")[1];
+        const j = +p.split("_")[2];
         const onMerge = {
           xl: i <= 0,
           xr: i >= rows.rowNum,
@@ -153,6 +153,9 @@ async function computerDown() {
           const ii = dirOprs[revDir][0];
           const jj = dirOprs[revDir][1];
 
+          let x = 0
+          let y = 0
+
           hasP = false || pDirs[revDir] === 1; // 是否有空位
           totL += pDirs[dir]; // 视为周围棋子的情况，越大表示自身的棋越多
 
@@ -180,23 +183,15 @@ async function computerDown() {
                 }
                 // 11011 10111
                 if (pDirs[dir] + hadDangerN + 1 === 5) {
-                  // assignP()
-                  const ii = dirOprs[revDir][0];
-                  const jj = dirOprs[revDir][1];
 
-                  const x = i + ii;
-                  const y = j + jj;
+                  x = i + ii;
+                  y = j + jj;
                   // next棋子是否越界
                   if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
                     continue;
                   }
-                  nextP[whichP].x = x;
-                  nextP[whichP].y = y;
-                  nextP[whichP].oriX = i;
-                  nextP[whichP].oriY = j;
+                  assignP();
 
-                  nextP[whichP].length = pDirs[dir];
-                  nextP[whichP].totL = totL;
                   findIt = true;
                   break;
                 }
@@ -213,23 +208,14 @@ async function computerDown() {
                     }
                   }
                   if (!hadRevP) {
-                    // assignP()
-                    const ii = dirOprs[revDir][0];
-                    const jj = dirOprs[revDir][1];
 
-                    const x = i + ii;
-                    const y = j + jj;
+                    x = i + ii;
+                    y = j + jj;
                     // next棋子是否越界
                     if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
                       continue;
                     }
-                    nextP[whichP].x = x;
-                    nextP[whichP].y = y;
-                    nextP[whichP].oriX = i;
-                    nextP[whichP].oriY = j;
-
-                    nextP[whichP].length = pDirs[dir];
-                    nextP[whichP].totL = totL;
+                    assignP();
                   }
                 }
               }
@@ -256,35 +242,16 @@ async function computerDown() {
               (pDirs[dir] === nextP[whichP].length &&
                 totL > nextP[whichP].totL))
           ) {
-            // assignP()
-            const ii = dirOprs[revDir][0];
-            const jj = dirOprs[revDir][1];
-
-            const x = i + ii;
-            const y = j + jj;
+            x = i + ii;
+            y = j + jj;
             // next棋子是否越界
             if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
               continue;
             }
-            nextP[whichP].x = x;
-            nextP[whichP].y = y;
-            nextP[whichP].oriX = i;
-            nextP[whichP].oriY = j;
-
-            nextP[whichP].length = pDirs[dir];
-            nextP[whichP].totL = totL;
+            assignP();
           }
 
           function assignP() {
-            const ii = dirOprs[revDir][0];
-            const jj = dirOprs[revDir][1];
-
-            const x = i + ii;
-            const y = j + jj;
-            // next棋子是否越界
-            if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
-              // continue;
-            }
             nextP[whichP].x = x;
             nextP[whichP].y = y;
             nextP[whichP].oriX = i;

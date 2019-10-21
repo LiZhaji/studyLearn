@@ -34,7 +34,7 @@ function ifSuccess(x, y) {
 // 获胜
 function success(i, j) {
   const curPiece = piecesCount[i][j]; // 当前位置 0: 空, 1: 黑棋, 2: 白棋
-  const key = "" + curPiece + "_x" + i + "_y" + j;
+  const key = "" + curPiece + "_" + i + "_" + j;
   process[key] = process[key] || {};
   const dirs = process[key];
   const tempDir = ["lup", "up", "rup", "l", "r", "lbt", "bt", "rbt"];
@@ -84,19 +84,19 @@ function getDirCount(i, j, curDir, curPiece) {
     const ii = dirOprs[curDir][0];
     const jj = dirOprs[curDir][1];
     const curCount =
-      process["" + targetPiece + "_x" + i + "_y" + j][curDir] > 0
-        ? process["" + targetPiece + "_x" + i + "_y" + j][curDir]
+      process["" + targetPiece + "_" + i + "_" + j][curDir] > 0
+        ? process["" + targetPiece + "_" + i + "_" + j][curDir]
         : 1; // 小于0表示没有一样的棋子，不能用该值参与计算
     tarCount = curCount + 1;
 
     // 2. 当前方向上所有的棋子反方向的count 更新
     // 需判断新棋子的反方向有无自家棋子,有则需要全部重新赋值
     const revCount =
-      process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][revDir] > 1 // 大于1表示有
-        ? process["" + targetPiece + "_x" + (i - ii) + "_y" + (j - jj)][revDir]
+      process["" + targetPiece + "_" + (i - ii) + "_" + (j - jj)][revDir] > 1 // 大于1表示有
+        ? process["" + targetPiece + "_" + (i - ii) + "_" + (j - jj)][revDir]
         : 1;
     for (let k = 0; k < curCount; k++) {
-      process["" + targetPiece + "_x" + (i + ii * k) + "_y" + (j + jj * k)][
+      process["" + targetPiece + "_" + (i + ii * k) + "_" + (j + jj * k)][
         revDir
       ] += revCount;
     }
@@ -105,7 +105,7 @@ function getDirCount(i, j, curDir, curPiece) {
     if (revCount > 1) {
       for (let k = 2; k <= revCount; k++) {
         let rp = (process[
-          "" + targetPiece + "_x" + (i - ii * k) + "_y" + (j - jj * k)
+          "" + targetPiece + "_" + (i - ii * k) + "_" + (j - jj * k)
         ][curDir] += tarCount - 1); // 减去新棋的重复
         if (rp >= 5) {
           gameover = true;
@@ -117,7 +117,7 @@ function getDirCount(i, j, curDir, curPiece) {
   } else {
     // 表示第一颗棋为对方棋子, 不仅要返回-2, 还要设置对方棋反方向的count = -2
     tarCount = -2;
-    process["" + targetPiece + "_x" + i + "_y" + j][revDir] = -2;
+    process["" + targetPiece + "_" + i + "_" + j][revDir] = -2;
     return tarCount;
   }
   if (tarCount >= 5) {
