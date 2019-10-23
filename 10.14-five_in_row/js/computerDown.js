@@ -3,7 +3,6 @@ async function computerDown() {
   let x = 0;
   let y = 0;
 
-  let findIt = false;
   const nextP = {
     1: {
       x: 0,
@@ -112,7 +111,7 @@ async function computerDown() {
   function getMaxP(whichP) {
     nextP.which = whichP;
 
-    for (const p in process) {
+    outer: for (const p in process) {
       if (p[0] === whichP) {
         const pDirs = process[p];
         const i = +p.split("_")[1];
@@ -125,7 +124,7 @@ async function computerDown() {
         };
         let totL = 0;
 
-        for (const dir in pDirs) {
+        inner: for (const dir in pDirs) {
           // 跳过边缘地区
           if (onMerge.xl) {
             if (/l/.test(dir)) {
@@ -153,71 +152,67 @@ async function computerDown() {
           const ii = dirOprs[revDir][0];
           const jj = dirOprs[revDir][1];
 
-          let x = 0
-          let y = 0
+          let x = 0;
+          let y = 0;
 
           hasP = false || pDirs[revDir] === 1; // 是否有空位
           totL += pDirs[dir]; // 视为周围棋子的情况，越大表示自身的棋越多
 
           if (hasP) {
-            // 11011 10111 找出这种情况
             let isP = false; // 反向第二个是否为本身
+
+            // 越界
             try {
               isP = piecesCount[i + ii * 2][j + jj * 2] === +whichP;
             } catch (err) {
               console.log(err);
             }
-            // 101 如果是这种类型
+            // ?101? 如果是这种类型
             if (isP) {
-              const count = 4 - pDirs[dir];
-              let hadDangerN = 1;
-              if (count > 1) {
-                for (let k = 3; k < count + 2; k++) {
-                  try {
-                    piecesCount[i + ii * k][j + jj * k] === +whichP
-                      ? (hadDangerN += 1)
-                      : "";
-                  } catch (err) {
-                    console.log(err);
-                  }
+              let matchFive = false;
+              let matchFour = false;
+
+              if (pDirs[dir] === 1) {
+                // m0111
+                matchFive =
+                  isSameP(i + ii * 3, j + jj * 3, whichP) &&
+                  isSameP(i + ii * 4, j + jj * 4, whichP);
+
+                // m011 && 两端为空
+                if (!matchFive) {
+                  matchFour =
+                    isSameP(i + ii * 3, j + jj * 3, whichP) &&
+                    isSameP(i + ii * 4, j + jj * 4, 0) &&
+                    isSameP(i + ii * -1, j + jj * -1, 0)
                 }
-                // 11011 10111
-                if (pDirs[dir] + hadDangerN + 1 === 5) {
+              } else if (pDirs[dir] === 2) {
+                // 1m011
+                matchFive = isSameP(i + ii * 3, j + jj * 3, whichP);
 
-                  x = i + ii;
-                  y = j + jj;
-                  // next棋子是否越界
-                  if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
-                    continue;
-                  }
-                  assignP();
-
-                  findIt = true;
-                  break;
+                // 1m01 && 两端为空
+                if (!matchFive) {
+                  matchFour =
+                    isSameP(i + ii * 3, j + jj * 3, 0) &&
+                    isSameP(i + ii * -2, j + jj * -2, 0);
                 }
-
-                // 1101 1011 && 非21101 11012
-                if (pDirs[dir] + hadDangerN + 1 === 4) {
-                  let hadRevP = false;
-                  for (let k = 1; k < 5; k++) {
-                    const revPiece = whichP === "1" ? 2 : 1;
-                    k = k % 2 === 0 ? k : -k;
-                    hadRevP = piecesCount[i + ii * k][j + jj * k] === revPiece;
-                    if (hadRevP) {
-                      break;
-                    }
-                  }
-                  if (!hadRevP) {
-
-                    x = i + ii;
-                    y = j + jj;
-                    // next棋子是否越界
-                    if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
-                      continue;
-                    }
-                    assignP();
-                  }
+              } else if (pDirs[dir] === 3) {
+                // 10m11
+                matchFive = true;
+              }
+              
+              if (matchFive || matchFour) {
+                x = i + ii;
+                y = j + jj;
+                // next棋子是否越界
+                if (x < 0 || x > rows.rowNum || y < 0 || y > rows.rowNum) {
+                  continue;
                 }
+                assignP(matchFive ? 5 : 4);
+
+                if (matchFive) {
+                  break outer;
+                }
+                continue;
               }
             }
           }
@@ -251,19 +246,20 @@ async function computerDown() {
             assignP();
           }
 
-          function assignP() {
+          function assignP(len) {
             nextP[whichP].x = x;
             nextP[whichP].y = y;
             nextP[whichP].oriX = i;
             nextP[whichP].oriY = j;
 
-            nextP[whichP].length = pDirs[dir];
+            nextP[whichP].length = len ? len : pDirs[dir];
             nextP[whichP].totL = totL;
           }
+
+          function isSameP(x, y, targetP) {
+            return piecesCount[x][y] === +targetP;
+          }
         }
-      }
-      if (findIt) {
-        break;
       }
     }
   }
